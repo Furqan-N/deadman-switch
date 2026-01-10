@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Switch - Deadman Switch{% endblock %}
+
+{% block head %}
+<script>
+    function formatTotal(seconds) {
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        let parts = [];
+        if (days) parts.push(days + 'd');
+        if (hours || days) parts.push(hours + 'h');
+        if (minutes || hours || days) parts.push(minutes + 'm');
+        parts.push(secs + 's');
+        return parts.join(' ');
+    }
+
+    function updateTimeoutTotal() {
+        const days = parseInt(document.getElementById('timeout_days').value, 10);
+        const hours = parseInt(document.getElementById('timeout_hours').value, 10);
+        const minutes = parseInt(document.getElementById('timeout_minutes').value, 10);
+        const seconds = parseInt(document.getElementById('timeout_seconds').value, 10);
+        const total = (days * 86400) + (hours * 3600) + (minutes * 60) + seconds;
+
+        document.getElementById('timeout_days_value').textContent = days;
+        document.getElementById('timeout_hours_value').textContent = hours;
+        document.getElementById('timeout_minutes_value').textContent = minutes;
+        document.getElementById('timeout_seconds_value').textContent = seconds;
+        document.getElementById('timeout_period').value = Math.max(total, 1);
+        document.getElementById('timeout_total_display').textContent = formatTotal(Math.max(total, 1));
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const sliders = document.querySelectorAll('.time-slider');
+        sliders.forEach((slider) => slider.addEventListener('input', updateTimeoutTotal));
+        updateTimeoutTotal();
+    });
+</script>
+{% endblock %}
+
+{% block body %} 
+
+<div class="nav-bar">
+    <h1>Create Switch</h1>
+    <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+
+<div class="card form-container">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="text-center mb-4">
+        <h2>Configure Your Switch</h2>
+        <p style="color: var(--text-secondary);">Set how long you have to check in before the switch triggers</p>
+    </div>
+
+    <form action="/switch/create" method="POST">
+        <div class="form-group">
+            <label>Timeout Period</label>
+            <div class="time-grid">
+                <div class="time-field">
+                    <div class="time-field-header">
+                        <label for="timeout_days">Days</label>
+                        <span id="timeout_days_value" class="time-value">0</span>
+                    </div>
+                    <input type="range" id="timeout_days" min="0" max="365" value="0" class="time-slider">
+                </div>
+                <div class="time-field">
+                    <div class="time-field-header">
+                        <label for="timeout_hours">Hours</label>
+                        <span id="timeout_hours_value" class="time-value">0</span>
+                    </div>
+                    <input type="range" id="timeout_hours" min="0" max="23" value="0" class="time-slider">
+                </div>
+                <div class="time-field">
+                    <div class="time-field-header">
+                        <label for="timeout_minutes">Minutes</label>
+                        <span id="timeout_minutes_value" class="time-value">0</span>
+                    </div>
+                    <input type="range" id="timeout_minutes" min="0" max="59" value="2" class="time-slider">
+                </div>
+                <div class="time-field">
+                    <div class="time-field-header">
+                        <label for="timeout_seconds">Seconds</label>
+                        <span id="timeout_seconds_value" class="time-value">0</span>
+                    </div>
+                    <input type="range" id="timeout_seconds" min="0" max="59" value="0" class="time-slider">
+                </div>
+            </div>
+            <input type="hidden" id="timeout_period" name="timeout_period" value="120" required>
+            <div class="time-total">
+                Total: <span id="timeout_total_display">2m 0s</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <input type="submit" value="Save Switch Settings">
+        </div>
+    </form>
+</div>
+
+{% endblock %}
