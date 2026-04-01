@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Email configuration
 SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
@@ -163,27 +162,24 @@ def send_email(to_email, subject, html_body):
     if not SMTP_USERNAME or not SMTP_PASSWORD:
         print(f"[EMAIL] Email not configured. Would send to {to_email}: {subject}")
         return False
-    
+
     try:
-        # Create message
         msg = MIMEMultipart('alternative')
         msg['From'] = EMAIL_FROM
         msg['To'] = to_email
         msg['Subject'] = subject
-        
-        # Add HTML body
+
         html_part = MIMEText(html_body, 'html')
         msg.attach(html_part)
-        
-        # Send email
+
         with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
             server.starttls()
             server.login(SMTP_USERNAME, SMTP_PASSWORD)
             server.send_message(msg)
-        
+
         print(f"[EMAIL] Successfully sent email to {to_email}: {subject}")
         return True
-    
+
     except Exception as e:
         print(f"[EMAIL] Error sending email to {to_email}: {str(e)}")
         return False
@@ -193,9 +189,8 @@ def send_trigger_notification(user_email, switch, dashboard_url):
     """Send email when switch is triggered"""
     last_checkin_str = switch.last_checkin.strftime('%Y-%m-%d %H:%M:%S UTC')
     triggered_at_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
-    
     timeout_period_str = format_time_remaining(switch.timeout_period)
-    
+
     template = Template(TRIGGER_EMAIL_TEMPLATE)
     html_body = template.safe_substitute(
         last_checkin=last_checkin_str,
@@ -203,7 +198,7 @@ def send_trigger_notification(user_email, switch, dashboard_url):
         triggered_at=triggered_at_str,
         dashboard_url=dashboard_url
     )
-    
+
     subject = "Deadman Switch TRIGGERED"
     return send_email(user_email, subject, html_body)
 
@@ -213,10 +208,9 @@ def send_reminder_notification(user_email, switch, time_remaining_seconds, dashb
     last_checkin_str = switch.last_checkin.strftime('%Y-%m-%d %H:%M:%S UTC')
     next_trigger_time = switch.last_checkin + timedelta(seconds=switch.timeout_period)
     next_trigger_str = next_trigger_time.strftime('%Y-%m-%d %H:%M:%S UTC')
-    
     timeout_period_str = format_time_remaining(switch.timeout_period)
     time_remaining_str = format_time_remaining(time_remaining_seconds)
-    
+
     template = Template(REMINDER_EMAIL_TEMPLATE)
     html_body = template.safe_substitute(
         time_remaining=time_remaining_str,
@@ -225,7 +219,7 @@ def send_reminder_notification(user_email, switch, time_remaining_seconds, dashb
         next_trigger_time=next_trigger_str,
         dashboard_url=dashboard_url
     )
-    
+
     subject = "Reminder: Check-In Required Soon"
     return send_email(user_email, subject, html_body)
 
@@ -233,10 +227,7 @@ def send_reminder_notification(user_email, switch, time_remaining_seconds, dashb
 def send_password_reset_email(user_email, reset_url):
     """Send password reset email"""
     template = Template(PASSWORD_RESET_EMAIL_TEMPLATE)
-    html_body = template.safe_substitute(
-        reset_url=reset_url
-    )
-    
+    html_body = template.safe_substitute(reset_url=reset_url)
+
     subject = "Password Reset Request"
     return send_email(user_email, subject, html_body)
-
